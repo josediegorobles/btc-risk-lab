@@ -1,0 +1,31 @@
+[package]
+name = "btc-risk-lab"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jose Robles"]
+description = "A Rust CLI for explainable Bitcoin transaction, PSBT, and script risk reports."
+license = "MIT"
+repository = "https://github.com/josediegorobles/btc-risk-lab"
+readme = "README.md"
+keywords = ["bitcoin", "rust", "psbt", "risk", "analysis"]
+categories = ["command-line-utilities", "cryptography::cryptocurrencies"]
+
+[features]
+default = []
+ai = []
+
+[dependencies]
+anyhow = "1"
+base64 = "0.22"
+bitcoin = { version = "0.32", features = ["serde"] }
+clap = { version = "4", features = ["derive"] }
+hex = "0.4"
+miniscript = "12"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"
