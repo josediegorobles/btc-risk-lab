@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">btc-risk-lab terminal demo</title>
+  <desc id="desc">Terminal transcript showing installation, transaction analysis from raw hex, and public fetch analysis.</desc>
+  <rect width="960" height="520" fill="#101418"/>
+  <rect x="24" y="24" width="912" height="472" rx="8" fill="#151b20" stroke="#2b3640"/>
+  <circle cx="54" cy="52" r="7" fill="#ff5f56"/>
+  <circle cx="78" cy="52" r="7" fill="#ffbd2e"/>
+  <circle cx="102" cy="52" r="7" fill="#27c93f"/>
+  <text x="132" y="57" fill="#9fb0bf" font-family="Menlo, Consolas, monospace" font-size="14">btc-risk-lab v0.2.0</text>
+
+  <g font-family="Menlo, Consolas, monospace" font-size="16">
+    <text x="48" y="96" fill="#64d2ff">$ cargo install btc-risk-lab</text>
+    <text x="48" y="124" fill="#cdd9e5">Installed package `btc-risk-lab v0.2.0`</text>
+
+    <text x="48" y="168" fill="#64d2ff">$ btc-risk-lab analyze-tx --hex 0200000001... --format markdown</text>
+    <text x="48" y="198" fill="#e6edf3"># BTC Risk Lab Report</text>
+    <text x="48" y="226" fill="#cdd9e5">- Artifact: `transaction`</text>
+    <text x="48" y="254" fill="#cdd9e5">- Risk: `medium`</text>
+    <text x="48" y="292" fill="#e6edf3">## Warnings</text>
+    <text x="48" y="320" fill="#ffcc66">- Cannot estimate fee: prevout values are missing</text>
+
+    <text x="48" y="374" fill="#64d2ff">$ cargo install btc-risk-lab --features fetch</text>
+    <text x="48" y="404" fill="#64d2ff">$ btc-risk-lab fetch-tx --txid a1075d...d48d</text>
+    <text x="48" y="434" fill="#e6edf3">| inputs | 131 |</text>
+    <text x="48" y="462" fill="#e6edf3">| outputs | 1 |</text>
+    <text x="48" y="490" fill="#7ee787">| estimated_fee_sats | 99000000 |</text>
+  </g>
+</svg>

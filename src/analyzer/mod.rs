@@ -6,7 +6,10 @@ use serde::{Deserialize, Serialize};
 
 pub use psbt::analyze_psbt_file;
 pub use script::analyze_script_input;
-pub use tx::analyze_transaction_file;
+pub use tx::{
+    analyze_transaction_file, analyze_transaction_hex, analyze_transaction_hex_with_prevouts,
+    PrevoutInput,
+};
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RiskReport {

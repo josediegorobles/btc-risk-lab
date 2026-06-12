@@ -2,7 +2,7 @@ use std::{fs, path::Path};
 
 use anyhow::{Context, Result};
 use bitcoin::{consensus::encode::deserialize, Transaction};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::{
     common_limitations, complexity, summary, warning, ArtifactType, OutputAnalysis, RiskLevel,
@@ -20,10 +20,10 @@ struct TransactionInputFile {
     prevouts: Vec<PrevoutInput>,
 }
 
-#[derive(Debug, Deserialize)]
-struct PrevoutInput {
-    value_sats: u64,
-    script_pubkey: Option<String>,
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PrevoutInput {
+    pub value_sats: u64,
+    pub script_pubkey: Option<String>,
 }
 
 pub fn analyze_transaction_file(path: &Path) -> Result<RiskReport> {
@@ -31,14 +31,30 @@ pub fn analyze_transaction_file(path: &Path) -> Result<RiskReport> {
         .with_context(|| format!("failed to read transaction input {}", path.display()))?;
     let input: TransactionInputFile =
         serde_json::from_str(&raw).context("transaction input must be JSON with a `hex` field")?;
-    let tx_bytes = hex::decode(input.hex.trim()).context("transaction hex is not valid hex")?;
+    analyze_transaction_hex_with_prevouts(&input.hex, &input.prevouts, None)
+}
+
+pub fn analyze_transaction_hex(hex: &str) -> Result<RiskReport> {
+    analyze_transaction_hex_with_prevouts(hex, &[], None)
+}
+
+pub fn analyze_transaction_hex_with_prevouts(
+    hex: &str,
+    prevouts: &[PrevoutInput],
+    known_fee_sats: Option<i64>,
+) -> Result<RiskReport> {
+    let tx_bytes = hex::decode(hex.trim()).context("transaction hex is not valid hex")?;
     let tx: Transaction =
         deserialize(&tx_bytes).context("transaction hex is not a valid Bitcoin transaction")?;
 
-    Ok(analyze_transaction(&tx, &input.prevouts))
+    Ok(analyze_transaction(&tx, prevouts, known_fee_sats))
 }
 
-fn analyze_transaction(tx: &Transaction, prevouts: &[PrevoutInput]) -> RiskReport {
+fn analyze_transaction(
+    tx: &Transaction,
+    prevouts: &[PrevoutInput],
+    known_fee_sats: Option<i64>,
+) -> RiskReport {
     let outputs = tx
         .output
         .iter()
@@ -61,14 +77,14 @@ fn analyze_transaction(tx: &Transaction, prevouts: &[PrevoutInput]) -> RiskRepor
         let input_value: u64 = prevouts.iter().map(|prevout| prevout.value_sats).sum();
         Some(input_value as i64 - output_value_sats as i64)
     } else {
-        None
+        known_fee_sats
     };
 
     let signals = transaction_signals(tx, &outputs, prevouts);
     let mut warnings = Vec::new();
     let mut missing_data = Vec::new();
 
-    if prevouts.len() != tx.input.len() {
+    if prevouts.len() != tx.input.len() && estimated_fee_sats.is_none() {
         missing_data.push("prevout values for every input".to_owned());
         warnings.push(warning(
             "missing-prevouts",
@@ -225,9 +241,23 @@ mod tests {
         };
         let tx = deserialize::<Transaction>(&hex::decode(input.hex).unwrap()).unwrap();
 
-        let report = analyze_transaction(&tx, &input.prevouts);
+        let report = analyze_transaction(&tx, &input.prevouts, None);
 
         assert_eq!(report.transaction.unwrap().estimated_fee_sats, Some(900));
         assert_eq!(report.risk, RiskLevel::Medium);
+    }
+
+    #[test]
+    fn direct_hex_reports_fee_unavailable_without_prevouts() {
+        let report = analyze_transaction_hex(
+            "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff02e80300000000000016001400000000000000000000000000000000000000006400000000000000160014111111111111111111111111111111111111111100000000",
+        )
+        .unwrap();
+
+        let tx = report.transaction.unwrap();
+        assert_eq!(tx.estimated_fee_sats, None);
+        assert!(report
+            .missing_data
+            .contains(&"prevout values for every input".to_owned()));
     }
 }

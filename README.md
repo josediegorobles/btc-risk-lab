@@ -1,6 +1,11 @@
 # btc-risk-lab
 
+[![Crates.io Version](https://img.shields.io/crates/v/btc-risk-lab)](https://crates.io/crates/btc-risk-lab)
+[![Crates.io Downloads](https://img.shields.io/crates/d/btc-risk-lab)](https://crates.io/crates/btc-risk-lab)
+
 `btc-risk-lab` is an explainable Bitcoin risk analysis CLI written in Rust.
+
+![btc-risk-lab terminal demo](docs/assets/demo.svg)
 
 It analyzes Bitcoin artifacts such as raw transactions, PSBTs, and scripts, then produces a technical report in JSON or Markdown. The goal is not to replace wallet software or consensus validation. The goal is to make transaction structure, missing data, policy signals, and review assumptions visible.
 
@@ -33,6 +38,20 @@ This MVP is intentionally small, but it is structured like a real due diligence 
 
 ## Install
 
+From crates.io:
+
+```bash
+cargo install btc-risk-lab
+```
+
+Install the optional public Esplora fetch command:
+
+```bash
+cargo install btc-risk-lab --features fetch
+```
+
+From source:
+
 ```bash
 git clone https://github.com/josediegorobles/btc-risk-lab.git
 cd btc-risk-lab
@@ -52,6 +71,22 @@ Analyze a transaction JSON file:
 ```bash
 btc-risk-lab analyze-tx --input examples/tx.json --format markdown
 ```
+
+Analyze a raw transaction hex string directly:
+
+```bash
+btc-risk-lab analyze-tx --hex 0200000001... --format markdown
+```
+
+When no prevouts are provided, fee analysis is reported as unavailable instead of guessed.
+
+Fetch a public transaction from mempool.space Esplora and analyze it with prevouts:
+
+```bash
+btc-risk-lab fetch-tx --txid a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d --format markdown
+```
+
+`fetch-tx` is behind the non-default `fetch` feature and only performs read-only HTTPS GET requests to public transaction endpoints. It does not broadcast transactions, sign, custody funds, or handle keys.
 
 Analyze a base64 PSBT:
 
