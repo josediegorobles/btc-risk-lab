@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0 - 2026-06-18
+
+### Added
+
+- Added `analyze-descriptor --descriptor <TEXT>` for output descriptor policy review.
+- Added descriptor analysis using `miniscript`, including descriptor type, script type, sanity check, max satisfaction weight, threshold/multisig signals, and timelock signals.
+- Added report schema version `0.3` to JSON and Markdown output.
+- Added descriptor fixtures and CLI/unit regression tests for simple, sortedmulti, timelock, and invalid descriptors.
+
+### Changed
+
+- Extended script signals with threshold policy support.
+- Extended Markdown reports with descriptor detail sections.
+- Extended transaction and PSBT reports while preserving existing artifact analysis boundaries.
+
 ## v0.2.0 - 2026-06-12
 
 ### Added

@@ -7,7 +7,7 @@
 
 ![btc-risk-lab terminal demo](docs/assets/demo.svg)
 
-It analyzes Bitcoin artifacts such as raw transactions, PSBTs, and scripts, then produces a technical report in JSON or Markdown. The goal is not to replace wallet software or consensus validation. The goal is to make transaction structure, missing data, policy signals, and review assumptions visible.
+It analyzes Bitcoin artifacts such as raw transactions, PSBTs, scripts, and output descriptors, then produces a technical report in JSON or Markdown. The goal is not to replace wallet software or consensus validation. The goal is to make transaction structure, missing data, policy signals, and review assumptions visible.
 
 This repository is also a public engineering artifact by **Jose Robles**, Head of Engineering / AI Architect, showing hands-on work across Rust, Bitcoin/blockchain, AI-assisted reporting, security-minded product boundaries, and technical due diligence.
 
@@ -30,6 +30,7 @@ This MVP is intentionally small, but it is structured like a real due diligence 
 
 - Rust CLI architecture with `clap`
 - Bitcoin transaction and PSBT parsing via `rust-bitcoin`
+- descriptor parsing and policy hints via `miniscript`
 - script inspection heuristics
 - structured reporting with `serde`
 - Markdown and JSON output
@@ -100,6 +101,12 @@ Analyze a script as hex or a small ASM subset:
 btc-risk-lab analyze-script --script "OP_CHECKMULTISIG OP_CHECKSEQUENCEVERIFY" --format markdown
 ```
 
+Analyze an output descriptor:
+
+```bash
+btc-risk-lab analyze-descriptor --descriptor "wsh(sortedmulti(2,02...,03...,04...))" --format markdown
+```
+
 Generate an optional executive summary from an existing JSON report:
 
 ```bash
@@ -148,7 +155,7 @@ Bitcoin transactions do not include the value of the UTXOs they spend. If `prevo
 - **Dust-like output detected** (`Medium`, `dust-output`): At least one non-zero output is below the heuristic dust threshold for its script type.
 ```
 
-## MVP Analysis Signals
+## Analysis Signals
 
 Current analysis includes:
 
@@ -161,7 +168,12 @@ Current analysis includes:
 - fee estimation when input UTXO values are available
 - multisig signals
 - absolute and relative timelock signals
+- descriptor type and script type
+- descriptor sanity check through `miniscript`
+- descriptor max satisfaction weight where available
+- threshold and multisig policy hints
 - script complexity score
+- report schema versioning
 - missing-data dependencies
 - risk classification: `low`, `medium`, `high`, or `unknown`
 - human-readable warning explanations
@@ -189,9 +201,9 @@ AI support is optional and isolated behind the `ai` feature flag. The intended p
 
 ## Limitations
 
-This MVP uses heuristics. It does not perform full Bitcoin Core policy validation, mempool acceptance simulation, chain lookup, script execution, descriptor wallet analysis, or consensus-level validation.
+This MVP uses heuristics. It does not perform full Bitcoin Core policy validation, mempool acceptance simulation, chain lookup, script execution, wallet state analysis, or consensus-level validation.
 
-Risk classifications are only as complete as the artifact data provided. Missing UTXO data, omitted redeem scripts, absent witness scripts, and incomplete PSBT maps can all reduce confidence.
+Risk classifications are only as complete as the artifact data provided. Missing UTXO data, omitted redeem scripts, absent witness scripts, incomplete PSBT maps, and descriptors without operational wallet context can all reduce confidence.
 
 ## Technical Due Diligence Connection
 
