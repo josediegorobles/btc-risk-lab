@@ -1,9 +1,11 @@
+mod descriptor;
 mod psbt;
 mod script;
 mod tx;
 
 use serde::{Deserialize, Serialize};
 
+pub use descriptor::analyze_descriptor_input;
 pub use psbt::analyze_psbt_file;
 pub use script::analyze_script_input;
 pub use tx::{
@@ -11,8 +13,11 @@ pub use tx::{
     PrevoutInput,
 };
 
+const REPORT_SCHEMA_VERSION: &str = "0.3";
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct RiskReport {
+    pub schema_version: String,
     pub artifact_type: ArtifactType,
     pub risk: RiskLevel,
     pub summary: Vec<SummaryItem>,
@@ -25,6 +30,8 @@ pub struct RiskReport {
     pub psbt: Option<PsbtAnalysis>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub script: Option<ScriptAnalysis>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub descriptor: Option<DescriptorAnalysis>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -33,6 +40,7 @@ pub enum ArtifactType {
     Transaction,
     Psbt,
     Script,
+    Descriptor,
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -115,6 +123,16 @@ pub struct ScriptAnalysis {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct DescriptorAnalysis {
+    pub descriptor_type: String,
+    pub script_type: String,
+    pub sanity_check: bool,
+    pub max_satisfaction_weight_wu: Option<u64>,
+    pub signals: ScriptSignals,
+    pub complexity: Complexity,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct OutputAnalysis {
     pub index: usize,
     pub value_sats: u64,
@@ -126,6 +144,7 @@ pub struct OutputAnalysis {
 #[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct ScriptSignals {
     pub multisig: bool,
+    pub threshold: bool,
     pub timelock: bool,
     pub relative_timelock: bool,
     pub op_return: bool,

@@ -55,6 +55,7 @@ pub fn analyze_script_input(input: &str) -> Result<RiskReport> {
 
     let risk = RiskLevel::from_warnings(&warnings, &missing_data);
     Ok(RiskReport {
+        schema_version: super::REPORT_SCHEMA_VERSION.to_owned(),
         artifact_type: ArtifactType::Script,
         risk,
         summary: vec![
@@ -69,6 +70,7 @@ pub fn analyze_script_input(input: &str) -> Result<RiskReport> {
         transaction: None,
         psbt: None,
         script: Some(analysis),
+        descriptor: None,
     })
 }
 
@@ -82,6 +84,7 @@ fn analyze_script(script: &Script) -> ScriptAnalysis {
     let lock_signals = contains_timelock(bytes);
     let signals = ScriptSignals {
         multisig: contains_multisig(bytes),
+        threshold: false,
         timelock: lock_signals.absolute,
         relative_timelock: lock_signals.relative,
         op_return: bytes.first().is_some_and(|opcode| *opcode == OP_RETURN),

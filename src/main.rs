@@ -68,6 +68,15 @@ enum Commands {
         format: CliFormat,
     },
 
+    /// Analyze an output descriptor for policy and script risk signals.
+    AnalyzeDescriptor {
+        #[arg(long)]
+        descriptor: String,
+
+        #[arg(long, value_enum, default_value_t = CliFormat::Markdown)]
+        format: CliFormat,
+    },
+
     /// Generate an optional executive summary from an existing technical JSON report.
     Summarize {
         #[arg(long)]
@@ -121,6 +130,10 @@ fn main() -> Result<()> {
         }
         Commands::AnalyzeScript { script, format } => {
             let report = analyzer::analyze_script_input(&script)?;
+            println!("{}", render_report(&report, format.into())?);
+        }
+        Commands::AnalyzeDescriptor { descriptor, format } => {
+            let report = analyzer::analyze_descriptor_input(&descriptor)?;
             println!("{}", render_report(&report, format.into())?);
         }
         Commands::Summarize { input, provider } => summarize(input, provider)?,

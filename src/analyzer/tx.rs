@@ -153,6 +153,7 @@ fn analyze_transaction(
 
     let risk = RiskLevel::from_warnings(&warnings, &missing_data);
     RiskReport {
+        schema_version: super::REPORT_SCHEMA_VERSION.to_owned(),
         artifact_type: ArtifactType::Transaction,
         risk,
         summary: summary_items,
@@ -170,6 +171,7 @@ fn analyze_transaction(
         }),
         psbt: None,
         script: None,
+        descriptor: None,
     }
 }
 

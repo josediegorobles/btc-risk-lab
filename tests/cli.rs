@@ -61,3 +61,56 @@ fn analyze_script_outputs_json() {
         .stdout(contains("\"risk\": \"medium\""))
         .stdout(contains("\"multisig\": true"));
 }
+
+#[test]
+fn analyze_descriptor_outputs_json() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "analyze-descriptor",
+        "--descriptor",
+        include_str!("fixtures/descriptors/sortedmulti.txt").trim(),
+        "--format",
+        "json",
+    ]);
+
+    cmd.assert()
+        .success()
+        .stdout(contains("\"schema_version\": \"0.3\""))
+        .stdout(contains("\"artifact_type\": \"descriptor\""))
+        .stdout(contains("\"descriptor_type\": \"wsh_sortedmulti\""))
+        .stdout(contains("\"threshold\": true"));
+}
+
+#[test]
+fn analyze_descriptor_outputs_markdown() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "analyze-descriptor",
+        "--descriptor",
+        include_str!("fixtures/descriptors/timelock.txt").trim(),
+        "--format",
+        "markdown",
+    ]);
+
+    cmd.assert()
+        .success()
+        .stdout(contains("BTC Risk Lab Report"))
+        .stdout(contains("Descriptor Detail"))
+        .stdout(contains("Timelock signal detected"));
+}
+
+#[test]
+fn analyze_descriptor_rejects_invalid_descriptor() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "analyze-descriptor",
+        "--descriptor",
+        include_str!("fixtures/descriptors/invalid.txt").trim(),
+        "--format",
+        "json",
+    ]);
+
+    cmd.assert().failure().stderr(contains(
+        "descriptor input is not a valid public-key output descriptor",
+    ));
+}

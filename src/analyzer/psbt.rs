@@ -127,6 +127,7 @@ fn analyze_psbt(psbt: &Psbt) -> RiskReport {
 
     let risk = RiskLevel::from_warnings(&warnings, &missing_data);
     RiskReport {
+        schema_version: super::REPORT_SCHEMA_VERSION.to_owned(),
         artifact_type: ArtifactType::Psbt,
         risk,
         summary: summary_items,
@@ -145,6 +146,7 @@ fn analyze_psbt(psbt: &Psbt) -> RiskReport {
             complexity,
         }),
         script: None,
+        descriptor: None,
     }
 }
 

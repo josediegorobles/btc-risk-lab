@@ -1,6 +1,6 @@
 [package]
 name = "btc-risk-lab"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["Jose Robles"]
 description = "A Rust CLI for explainable Bitcoin transaction, PSBT, and script risk reports."

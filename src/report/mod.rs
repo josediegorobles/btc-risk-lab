@@ -22,6 +22,7 @@ fn render_markdown(report: &RiskReport) -> String {
         "- Artifact: `{}`\n",
         artifact_name(&report.artifact_type)
     ));
+    markdown.push_str(&format!("- Schema: `{}`\n", report.schema_version));
     let risk = format!("{:?}", report.risk).to_lowercase();
     markdown.push_str(&format!("- Risk: `{risk}`\n\n"));
 
@@ -85,6 +86,28 @@ fn render_markdown(report: &RiskReport) -> String {
         ));
     }
 
+    if let Some(descriptor) = &report.descriptor {
+        markdown.push_str("## Descriptor Detail\n\n");
+        markdown.push_str(&format!(
+            "- Descriptor type: `{}`\n- Script type: `{}`\n- Sanity check: `{}`\n",
+            descriptor.descriptor_type, descriptor.script_type, descriptor.sanity_check
+        ));
+        if let Some(weight) = descriptor.max_satisfaction_weight_wu {
+            markdown.push_str(&format!("- Max satisfaction weight: `{weight}` WU\n"));
+        }
+        markdown.push_str(&format!(
+            "- Signals: multisig `{}`, threshold `{}`, timelock `{}`, relative timelock `{}`\n",
+            descriptor.signals.multisig,
+            descriptor.signals.threshold,
+            descriptor.signals.timelock,
+            descriptor.signals.relative_timelock
+        ));
+        markdown.push_str(&format!(
+            "- Complexity: `{}` score `{}`\n\n",
+            descriptor.complexity.label, descriptor.complexity.score
+        ));
+    }
+
     markdown.push_str("## Limitations\n\n");
     for limitation in &report.limitations {
         markdown.push_str(&format!("- {}\n", limitation));
@@ -112,6 +135,7 @@ fn artifact_name(artifact_type: &ArtifactType) -> &'static str {
         ArtifactType::Transaction => "transaction",
         ArtifactType::Psbt => "psbt",
         ArtifactType::Script => "script",
+        ArtifactType::Descriptor => "descriptor",
     }
 }
 
