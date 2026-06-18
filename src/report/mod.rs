@@ -114,3 +114,36 @@ fn artifact_name(artifact_type: &ArtifactType) -> &'static str {
         ArtifactType::Script => "script",
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::analyzer::analyze_script_input;
+
+    #[test]
+    fn renders_script_report_as_stable_json_shape() {
+        let report = analyze_script_input("OP_CHECKMULTISIG OP_CHECKSEQUENCEVERIFY").unwrap();
+
+        let rendered = render_report(&report, OutputFormat::Json).unwrap();
+        let json: serde_json::Value = serde_json::from_str(&rendered).unwrap();
+
+        assert_eq!(json["artifact_type"], "script");
+        assert_eq!(json["risk"], "medium");
+        assert_eq!(json["script"]["signals"]["multisig"], true);
+        assert_eq!(json["script"]["signals"]["relative_timelock"], true);
+    }
+
+    #[test]
+    fn renders_script_report_as_stable_markdown_sections() {
+        let report = analyze_script_input("OP_CHECKMULTISIG OP_CHECKSEQUENCEVERIFY").unwrap();
+
+        let rendered = render_report(&report, OutputFormat::Markdown).unwrap();
+
+        assert!(rendered.starts_with("# BTC Risk Lab Report\n\n"));
+        assert!(rendered.contains("- Artifact: `script`"));
+        assert!(rendered.contains("- Risk: `medium`"));
+        assert!(rendered.contains("## Warnings\n\n"));
+        assert!(rendered.contains("## Script Detail\n\n"));
+        assert!(rendered.contains("## Limitations\n\n"));
+    }
+}

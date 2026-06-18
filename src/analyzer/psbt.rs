@@ -217,17 +217,42 @@ fn psbt_complexity_score(psbt: &Psbt, signals: &ScriptSignals) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bitcoin::{Amount, ScriptBuf, TxOut};
 
-    #[test]
-    fn parses_minimal_psbt() {
+    fn minimal_psbt() -> Psbt {
         let bytes = STANDARD
             .decode("cHNidP8BAHECAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/////wD/////AugDAAAAAAAAFgAUAAAAAAAAAAAAAAAAAAAAAAAAAABkAAAAAAAAABYAFBERERERERERERERERERERERERERAAAAAAAAAAA=")
             .unwrap();
-        let psbt = Psbt::deserialize(&bytes).unwrap();
+
+        Psbt::deserialize(&bytes).unwrap()
+    }
+
+    #[test]
+    fn parses_minimal_psbt() {
+        let psbt = minimal_psbt();
 
         let report = analyze_psbt(&psbt);
 
         assert_eq!(report.psbt.unwrap().input_count, 1);
         assert_eq!(report.risk, RiskLevel::Medium);
+    }
+
+    #[test]
+    fn warns_when_witness_utxo_implies_negative_fee() {
+        let mut psbt = minimal_psbt();
+        psbt.inputs[0].witness_utxo = Some(TxOut {
+            value: Amount::from_sat(1_000),
+            script_pubkey: ScriptBuf::new(),
+        });
+
+        let report = analyze_psbt(&psbt);
+
+        assert_eq!(report.psbt.unwrap().estimated_fee_sats, Some(-100));
+        assert_eq!(report.risk, RiskLevel::High);
+        assert!(report.missing_data.is_empty());
+        assert!(report
+            .warnings
+            .iter()
+            .any(|warning| warning.code == "negative-fee"));
     }
 }

@@ -230,16 +230,22 @@ fn complexity_score(tx: &Transaction, signals: &ScriptSignals) -> u32 {
 mod tests {
     use super::*;
 
+    const SAMPLE_TX_HEX: &str = "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff02e80300000000000016001400000000000000000000000000000000000000006400000000000000160014111111111111111111111111111111111111111100000000";
+
+    fn sample_tx() -> Transaction {
+        deserialize(&hex::decode(SAMPLE_TX_HEX).unwrap()).unwrap()
+    }
+
     #[test]
     fn estimates_fee_when_prevouts_are_present() {
         let input = TransactionInputFile {
-            hex: "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff02e80300000000000016001400000000000000000000000000000000000000006400000000000000160014111111111111111111111111111111111111111100000000".to_owned(),
+            hex: SAMPLE_TX_HEX.to_owned(),
             prevouts: vec![PrevoutInput {
                 value_sats: 2_000,
                 script_pubkey: None,
             }],
         };
-        let tx = deserialize::<Transaction>(&hex::decode(input.hex).unwrap()).unwrap();
+        let tx = sample_tx();
 
         let report = analyze_transaction(&tx, &input.prevouts, None);
 
@@ -249,15 +255,54 @@ mod tests {
 
     #[test]
     fn direct_hex_reports_fee_unavailable_without_prevouts() {
-        let report = analyze_transaction_hex(
-            "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff02e80300000000000016001400000000000000000000000000000000000000006400000000000000160014111111111111111111111111111111111111111100000000",
-        )
-        .unwrap();
+        let report = analyze_transaction_hex(SAMPLE_TX_HEX).unwrap();
 
         let tx = report.transaction.unwrap();
         assert_eq!(tx.estimated_fee_sats, None);
         assert!(report
             .missing_data
             .contains(&"prevout values for every input".to_owned()));
+    }
+
+    #[test]
+    fn warns_when_prevouts_imply_negative_fee() {
+        let tx = sample_tx();
+        let prevouts = vec![PrevoutInput {
+            value_sats: 1_000,
+            script_pubkey: None,
+        }];
+
+        let report = analyze_transaction(&tx, &prevouts, None);
+
+        assert_eq!(report.transaction.unwrap().estimated_fee_sats, Some(-100));
+        assert_eq!(report.risk, RiskLevel::High);
+        assert!(report
+            .warnings
+            .iter()
+            .any(|warning| warning.code == "negative-fee"));
+    }
+
+    #[test]
+    fn detects_multisig_and_timelock_from_prevout_script_pubkeys() {
+        let tx = sample_tx();
+        let prevouts = vec![PrevoutInput {
+            value_sats: 2_000,
+            script_pubkey: Some("52aeb2".to_owned()),
+        }];
+
+        let report = analyze_transaction(&tx, &prevouts, None);
+        let analysis = report.transaction.unwrap();
+
+        assert!(analysis.signals.multisig);
+        assert!(analysis.signals.relative_timelock);
+        assert_eq!(report.risk, RiskLevel::Medium);
+        assert!(report
+            .warnings
+            .iter()
+            .any(|warning| warning.code == "multisig-signal"));
+        assert!(report
+            .warnings
+            .iter()
+            .any(|warning| warning.code == "timelock-signal"));
     }
 }
