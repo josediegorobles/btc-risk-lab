@@ -309,7 +309,7 @@ fn read_policy(
 
     artifacts.push(detected("policy", &path));
     let input = fs::read_to_string(&path)
-        .with_context(|| format!("failed to read policy notes {}", path.display()))?;
+        .with_context(|| format!("failed to read policy.json {}", path.display()))?;
 
     match serde_json::from_str::<Value>(&input) {
         Ok(value) => summaries.push(ArtifactSummary {
@@ -378,7 +378,7 @@ fn push_report_summary(
     warnings.extend(report.warnings.iter().cloned().map(|warning| {
         let mut warning = warning;
         warning.code = format!("{artifact}:{}", warning.code);
-        warning.title = format!("{}: {}", title_case(artifact), warning.title);
+        warning.title = format!("{}: {}", artifact_label(artifact), warning.title);
         warning
     }));
 
@@ -410,7 +410,7 @@ fn push_error_summary(
     let warning = RiskWarning {
         code: code.to_owned(),
         severity: RiskLevel::High,
-        title: format!("{} could not be analyzed", title_case(artifact)),
+        title: format!("{} could not be analyzed", artifact_label(artifact)),
         explanation: error.clone(),
     };
     warnings.push(warning.clone());
@@ -421,7 +421,7 @@ fn push_error_summary(
         risk: Some(RiskLevel::High),
         summary: Vec::new(),
         warnings: vec![warning],
-        missing_data: vec![error],
+        missing_data: vec![format!("valid parseable {artifact} data")],
     });
 }
 
@@ -746,7 +746,11 @@ fn file_name(path: &Path) -> String {
         .unwrap_or_else(|| path.display().to_string())
 }
 
-fn title_case(input: &str) -> String {
+fn artifact_label(input: &str) -> String {
+    if input == "psbt" {
+        return "PSBT".to_owned();
+    }
+
     let mut chars = input.chars();
     match chars.next() {
         Some(first) => first.to_uppercase().chain(chars).collect(),

@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::analyzer::{ArtifactType, RiskReport};
+use crate::analyzer::{ArtifactType, RiskLevel, RiskReport};
 use crate::review_pack::ReviewPackReport;
 
 #[derive(Clone, Copy, Debug)]
@@ -146,8 +146,8 @@ fn render_review_pack_markdown(report: &ReviewPackReport) -> String {
     markdown.push_str("# BTC Risk Lab Review Pack\n\n");
     markdown.push_str(&format!("- Schema: `{}`\n", report.schema_version));
     markdown.push_str(&format!(
-        "- Consolidated risk: `{:?}`\n\n",
-        report.consolidated_risk
+        "- Consolidated risk: `{}`\n\n",
+        risk_name(&report.consolidated_risk)
     ));
 
     markdown.push_str("## Artifacts Detected\n\n");
@@ -174,7 +174,7 @@ fn render_review_pack_markdown(report: &ReviewPackReport) -> String {
                 artifact.artifact, artifact.status
             ));
             if let Some(risk) = &artifact.risk {
-                markdown.push_str(&format!("- Risk: `{:?}`\n", risk));
+                markdown.push_str(&format!("- Risk: `{}`\n", risk_name(risk)));
             }
             for item in &artifact.summary {
                 markdown.push_str(&format!("- {}: `{}`\n", item.label, item.value));
@@ -240,6 +240,15 @@ fn render_review_pack_markdown(report: &ReviewPackReport) -> String {
     }
 
     markdown
+}
+
+fn risk_name(risk: &RiskLevel) -> &'static str {
+    match risk {
+        RiskLevel::Low => "low",
+        RiskLevel::Medium => "medium",
+        RiskLevel::High => "high",
+        RiskLevel::Unknown => "unknown",
+    }
 }
 
 fn artifact_name(artifact_type: &ArtifactType) -> &'static str {
