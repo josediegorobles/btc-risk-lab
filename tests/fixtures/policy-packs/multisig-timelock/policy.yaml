@@ -1,0 +1,5 @@
+quorum: 2-of-3
+network: bitcoin-mainnet
+timelock_review_required: true
+change_policy: manual-review
+public_demo: true

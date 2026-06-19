@@ -22,6 +22,7 @@ Bitcoin and Web3 systems often fail at the edges: incomplete transaction context
 - human-readable warning explanations
 - JSON output suitable for downstream automation
 - consolidated review packs for descriptor, PSBT, transaction, script, policy, and notes directories
+- policy-pack reports for custody, audit, and technical review evidence
 - optional AI summary layer that never replaces the technical report
 - clear security boundaries around private keys and funds
 
@@ -36,6 +37,7 @@ This MVP is intentionally small, but it is structured like a real due diligence 
 - structured reporting with `serde`
 - Markdown and JSON output
 - review-pack reports with cross-artifact checks
+- policy-pack reports with policy notes and metadata evidence
 - CI with `fmt`, `clippy`, and tests
 - a security posture that avoids custody, signing, seed phrases, and private key handling
 
@@ -132,6 +134,29 @@ btc-risk-lab review-pack --input ./review-pack --format json --output review-pac
 
 It reuses the existing descriptor, PSBT, transaction, and script analyzers, then emits a schema `0.4` `ReviewPackReport` with detected artifacts, per-artifact summaries, consolidated risk, warnings, missing data, cross-artifact findings, review questions, and limitations.
 
+Analyze a policy pack directory for custody or audit review:
+
+```bash
+btc-risk-lab policy-pack --input tests/fixtures/policy-packs/multisig-timelock --format markdown
+```
+
+Write a policy pack report to a file:
+
+```bash
+btc-risk-lab policy-pack --input ./policy-pack --format markdown --output docs/policy-pack-sample.md
+```
+
+`policy-pack` reuses `review-pack` and the existing descriptor, PSBT, transaction, and script analyzers. It adds policy evidence handling for:
+
+- `policy.md`
+- `policy.yaml` or `policy.yml`
+- `policy.json`
+- `notes.md`
+- `metadata.json`
+- `metadata.yaml` or `metadata.yml`
+
+The schema `0.5` `PolicyPackReport` includes artifacts detected, evidence document summaries, per-artifact summaries, consolidated findings, warnings, missing evidence, review questions, and clear limitations. A public sample is available at [`docs/policy-pack-sample.md`](docs/policy-pack-sample.md).
+
 Generate an optional executive summary from an existing JSON report:
 
 ```bash
@@ -198,6 +223,7 @@ Current analysis includes:
 - descriptor max satisfaction weight where available
 - threshold and multisig policy hints
 - review-pack cross-artifact checks for descriptor/PSBT policy signals and PSBT/transaction input-output counts
+- policy-pack findings for policy notes, optional metadata, missing evidence, and custodian/auditor review questions
 - script complexity score
 - report schema versioning
 - missing-data dependencies
@@ -215,6 +241,7 @@ Current analysis includes:
 - request seed phrases
 - broadcast transactions
 - make network calls from `review-pack`
+- make network calls from `policy-pack`
 - promise consensus-level validation
 - send secrets to an LLM
 
@@ -233,6 +260,8 @@ This MVP uses heuristics. It does not perform full Bitcoin Core policy validatio
 Risk classifications are only as complete as the artifact data provided. Missing UTXO data, omitted redeem scripts, absent witness scripts, incomplete PSBT maps, descriptors without operational wallet context, and review packs without matching descriptor/PSBT/transaction artifacts can all reduce confidence.
 
 Review-pack cross-artifact checks are intentionally limited. The tool compares available policy signals and input/output counts, but it does not prove descriptor-to-PSBT equivalence, transaction extraction from PSBT, key origin correctness, signer-set ownership, or wallet state.
+
+Policy-pack reports are evidence packs, not approvals. They summarize Markdown/YAML policy notes structurally, compare available analyzer signals, and surface missing evidence, but they do not semantically validate natural-language policy commitments or prove wallet ownership.
 
 ## Technical Due Diligence Connection
 

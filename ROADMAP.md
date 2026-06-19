@@ -8,6 +8,7 @@
 - [x] script analysis from hex or a small ASM subset
 - [x] descriptor parsing and policy hints with `miniscript`
 - [x] review-pack reports for descriptor, PSBT, transaction, script, policy, and notes directories
+- [x] policy-pack reports for custody/audit policy evidence directories
 - [x] report schema versioning
 - [x] JSON and Markdown reports
 - [x] risk warnings with human explanations
@@ -31,8 +32,8 @@
 
 ## Due Diligence Use Cases
 
-- richer batch analysis for transaction review packs
-- policy review for multisig and timelock setups
+- richer batch analysis for transaction and policy packs
+- deeper policy review for multisig and timelock setups
 - PSBT readiness checklist
 - executive PDF or Markdown due diligence reports
 - CI mode for teams that want checks on generated Bitcoin artifacts
@@ -46,4 +47,5 @@
 - custody
 - broadcasting
 - review-pack network calls
+- policy-pack network calls
 - consensus-level validation claims

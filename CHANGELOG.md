@@ -1,5 +1,19 @@
 # Changelog
 
+## v0.5.0 - 2026-06-19
+
+### Added
+
+- Added `policy-pack --input DIR --format json|markdown [--output FILE]` for local custody, audit, and technical policy evidence review.
+- Added schema version `0.5` `PolicyPackReport` output with artifacts detected, evidence document summaries, per-artifact summaries, consolidated findings, warnings, missing evidence, review questions, and limitations.
+- Added Markdown/YAML/JSON policy note evidence summaries and optional metadata evidence summaries.
+- Added policy-pack fixtures and CLI/unit regression tests, including missing policy notes coverage.
+- Added a public sample report at `docs/policy-pack-sample.md`.
+
+### Security
+
+- `policy-pack` performs local file analysis only. It does not sign, create wallets, handle keys, broadcast transactions, or make network calls.
+
 ## v0.4.0 - 2026-06-19
 
 ### Added

@@ -160,3 +160,49 @@ fn review_pack_outputs_markdown_file() {
     assert!(rendered.contains("Review Questions"));
     assert!(rendered.contains("Limitations"));
 }
+
+#[test]
+fn policy_pack_outputs_json() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "policy-pack",
+        "--input",
+        "tests/fixtures/policy-packs/multisig-timelock",
+        "--format",
+        "json",
+    ]);
+
+    cmd.assert()
+        .success()
+        .stdout(contains("\"schema_version\": \"0.5\""))
+        .stdout(contains("\"pack_type\": \"policy_pack\""))
+        .stdout(contains("\"evidence_documents\""))
+        .stdout(contains("\"missing_evidence\""))
+        .stdout(contains("\"descriptor-psbt-multisig-mismatch\""));
+}
+
+#[test]
+fn policy_pack_outputs_markdown_file() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let output = temp_dir.path().join("policy-pack.md");
+
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "policy-pack",
+        "--input",
+        "tests/fixtures/policy-packs/multisig-timelock",
+        "--format",
+        "markdown",
+        "--output",
+        output.to_str().unwrap(),
+    ]);
+
+    cmd.assert().success().stdout("");
+
+    let rendered = fs::read_to_string(output).unwrap();
+    assert!(rendered.contains("BTC Risk Lab Policy Pack"));
+    assert!(rendered.contains("Evidence Documents"));
+    assert!(rendered.contains("Findings"));
+    assert!(rendered.contains("Missing Evidence"));
+    assert!(rendered.contains("Limitations"));
+}
