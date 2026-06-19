@@ -4,7 +4,9 @@ use anyhow::{bail, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 
 use btc_risk_lab::analyzer;
-use btc_risk_lab::report::{render_report, render_review_pack_report, OutputFormat};
+use btc_risk_lab::report::{
+    render_policy_pack_report, render_report, render_review_pack_report, OutputFormat,
+};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -89,6 +91,18 @@ enum Commands {
         output: Option<PathBuf>,
     },
 
+    /// Analyze a local policy pack with Bitcoin artifacts, policy notes, and optional metadata.
+    PolicyPack {
+        #[arg(long, value_name = "DIR")]
+        input: PathBuf,
+
+        #[arg(long, value_enum, default_value_t = CliFormat::Markdown)]
+        format: CliFormat,
+
+        #[arg(long, value_name = "FILE")]
+        output: Option<PathBuf>,
+    },
+
     /// Generate an optional executive summary from an existing technical JSON report.
     Summarize {
         #[arg(long)]
@@ -155,6 +169,14 @@ fn main() -> Result<()> {
         } => {
             let report = btc_risk_lab::review_pack::analyze_review_pack(&input)?;
             write_or_print(render_review_pack_report(&report, format.into())?, output)?;
+        }
+        Commands::PolicyPack {
+            input,
+            format,
+            output,
+        } => {
+            let report = btc_risk_lab::policy_pack::analyze_policy_pack(&input)?;
+            write_or_print(render_policy_pack_report(&report, format.into())?, output)?;
         }
         Commands::Summarize { input, provider } => summarize(input, provider)?,
     }

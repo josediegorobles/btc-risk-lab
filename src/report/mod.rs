@@ -1,6 +1,7 @@
 use anyhow::Result;
 
 use crate::analyzer::{ArtifactType, RiskLevel, RiskReport};
+use crate::policy_pack::PolicyPackReport;
 use crate::review_pack::ReviewPackReport;
 
 #[derive(Clone, Copy, Debug)]
@@ -23,6 +24,16 @@ pub fn render_review_pack_report(
     match format {
         OutputFormat::Json => Ok(serde_json::to_string_pretty(report)?),
         OutputFormat::Markdown => Ok(render_review_pack_markdown(report)),
+    }
+}
+
+pub fn render_policy_pack_report(
+    report: &PolicyPackReport,
+    format: OutputFormat,
+) -> Result<String> {
+    match format {
+        OutputFormat::Json => Ok(serde_json::to_string_pretty(report)?),
+        OutputFormat::Markdown => Ok(render_policy_pack_markdown(report)),
     }
 }
 
@@ -242,6 +253,125 @@ fn render_review_pack_markdown(report: &ReviewPackReport) -> String {
     markdown
 }
 
+fn render_policy_pack_markdown(report: &PolicyPackReport) -> String {
+    let mut markdown = String::new();
+    markdown.push_str("# BTC Risk Lab Policy Pack\n\n");
+    markdown.push_str(&format!("- Schema: `{}`\n", report.schema_version));
+    markdown.push_str(&format!("- Pack type: `{}`\n", report.pack_type));
+    markdown.push_str(&format!(
+        "- Consolidated risk: `{}`\n\n",
+        risk_name(&report.consolidated_risk)
+    ));
+
+    markdown.push_str("## Artifacts Detected\n\n");
+    if report.artifacts_detected.is_empty() {
+        markdown.push_str("- No known policy pack artifacts were detected.\n\n");
+    } else {
+        markdown.push_str("| Artifact | File |\n|---|---|\n");
+        for artifact in &report.artifacts_detected {
+            markdown.push_str(&format!(
+                "| `{}` | `{}` |\n",
+                artifact.artifact, artifact.file
+            ));
+        }
+        markdown.push('\n');
+    }
+
+    if !report.evidence_documents.is_empty() {
+        markdown.push_str("## Evidence Documents\n\n");
+        markdown.push_str("| Artifact | File | Format | Summary |\n|---|---|---|---|\n");
+        for document in &report.evidence_documents {
+            let summary = document
+                .summary
+                .iter()
+                .map(|item| format!("{}: {}", item.label, item.value))
+                .collect::<Vec<_>>()
+                .join("; ");
+            let summary = markdown_table_cell(&summary);
+            markdown.push_str(&format!(
+                "| `{}` | `{}` | `{}` | {} |\n",
+                markdown_table_cell(&document.artifact),
+                markdown_table_cell(&document.file),
+                markdown_table_cell(&document.format),
+                summary
+            ));
+        }
+        markdown.push('\n');
+    }
+
+    markdown.push_str("## Findings\n\n");
+    for finding in &report.findings {
+        markdown.push_str(&format!(
+            "- **{}** (`{}`, `{}`): {}\n",
+            finding.title,
+            risk_name(&finding.severity),
+            finding.code,
+            finding.explanation
+        ));
+    }
+    markdown.push('\n');
+
+    if !report.warnings.is_empty() {
+        markdown.push_str("## Warnings\n\n");
+        for warning in &report.warnings {
+            markdown.push_str(&format!(
+                "- **{}** (`{}`, `{}`): {}\n",
+                warning.title,
+                risk_name(&warning.severity),
+                warning.code,
+                warning.explanation
+            ));
+        }
+        markdown.push('\n');
+    }
+
+    if !report.missing_evidence.is_empty() {
+        markdown.push_str("## Missing Evidence\n\n");
+        for item in &report.missing_evidence {
+            markdown.push_str(&format!("- {}\n", item));
+        }
+        markdown.push('\n');
+    }
+
+    markdown.push_str("## Per-Artifact Summary\n\n");
+    if report.per_artifact_summary.is_empty() {
+        markdown.push_str("- No artifact summaries available.\n\n");
+    } else {
+        for artifact in &report.per_artifact_summary {
+            markdown.push_str(&format!(
+                "### `{}` ({:?})\n\n",
+                artifact.artifact, artifact.status
+            ));
+            if let Some(risk) = &artifact.risk {
+                markdown.push_str(&format!("- Risk: `{}`\n", risk_name(risk)));
+            }
+            for item in &artifact.summary {
+                markdown.push_str(&format!("- {}: `{}`\n", item.label, item.value));
+            }
+            if !artifact.missing_data.is_empty() {
+                markdown.push_str("- Missing data:\n");
+                for item in &artifact.missing_data {
+                    markdown.push_str(&format!("  - {}\n", item));
+                }
+            }
+            markdown.push('\n');
+        }
+    }
+
+    markdown.push_str("## Review Questions\n\n");
+    for question in &report.review_questions {
+        markdown.push_str(&format!("- {}\n", question));
+    }
+    markdown.push('\n');
+
+    markdown.push_str("## Limitations\n\n");
+    for limitation in &report.limitations {
+        markdown.push_str(&format!("- {}\n", limitation));
+    }
+
+    markdown
+}
+
 fn risk_name(risk: &RiskLevel) -> &'static str {
     match risk {
         RiskLevel::Low => "low",
@@ -249,6 +379,13 @@ fn risk_name(risk: &RiskLevel) -> &'static str {
         RiskLevel::High => "high",
         RiskLevel::Unknown => "unknown",
     }
+}
+
+fn markdown_table_cell(input: &str) -> String {
+    input
+        .replace('\\', "\\\\")
+        .replace('|', "\\|")
+        .replace(['\n', '\r'], " ")
 }
 
 fn artifact_name(artifact_type: &ArtifactType) -> &'static str {

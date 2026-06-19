@@ -1,4 +1,5 @@
 pub mod analyzer;
+pub mod policy_pack;
 pub mod report;
 pub mod review_pack;
 
