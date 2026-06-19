@@ -21,6 +21,7 @@ Bitcoin and Web3 systems often fail at the edges: incomplete transaction context
 - explicit missing-data dependencies
 - human-readable warning explanations
 - JSON output suitable for downstream automation
+- consolidated review packs for descriptor, PSBT, transaction, script, policy, and notes directories
 - optional AI summary layer that never replaces the technical report
 - clear security boundaries around private keys and funds
 
@@ -34,6 +35,7 @@ This MVP is intentionally small, but it is structured like a real due diligence 
 - script inspection heuristics
 - structured reporting with `serde`
 - Markdown and JSON output
+- review-pack reports with cross-artifact checks
 - CI with `fmt`, `clippy`, and tests
 - a security posture that avoids custody, signing, seed phrases, and private key handling
 
@@ -107,6 +109,29 @@ Analyze an output descriptor:
 btc-risk-lab analyze-descriptor --descriptor "wsh(sortedmulti(2,02...,03...,04...))" --format markdown
 ```
 
+Analyze a local review pack directory:
+
+```bash
+btc-risk-lab review-pack --input tests/fixtures/review-packs/complete --format markdown
+```
+
+Write a review pack report to a file:
+
+```bash
+btc-risk-lab review-pack --input ./review-pack --format json --output review-pack-report.json
+```
+
+`review-pack` looks for these optional files:
+
+- `descriptor.txt`
+- `psbt.base64`
+- `tx.json`
+- `script.txt`
+- `policy.json`
+- `notes.md`
+
+It reuses the existing descriptor, PSBT, transaction, and script analyzers, then emits a schema `0.4` `ReviewPackReport` with detected artifacts, per-artifact summaries, consolidated risk, warnings, missing data, cross-artifact findings, review questions, and limitations.
+
 Generate an optional executive summary from an existing JSON report:
 
 ```bash
@@ -172,6 +197,7 @@ Current analysis includes:
 - descriptor sanity check through `miniscript`
 - descriptor max satisfaction weight where available
 - threshold and multisig policy hints
+- review-pack cross-artifact checks for descriptor/PSBT policy signals and PSBT/transaction input-output counts
 - script complexity score
 - report schema versioning
 - missing-data dependencies
@@ -188,6 +214,7 @@ Current analysis includes:
 - handle private keys
 - request seed phrases
 - broadcast transactions
+- make network calls from `review-pack`
 - promise consensus-level validation
 - send secrets to an LLM
 
@@ -203,7 +230,9 @@ AI support is optional and isolated behind the `ai` feature flag. The intended p
 
 This MVP uses heuristics. It does not perform full Bitcoin Core policy validation, mempool acceptance simulation, chain lookup, script execution, wallet state analysis, or consensus-level validation.
 
-Risk classifications are only as complete as the artifact data provided. Missing UTXO data, omitted redeem scripts, absent witness scripts, incomplete PSBT maps, and descriptors without operational wallet context can all reduce confidence.
+Risk classifications are only as complete as the artifact data provided. Missing UTXO data, omitted redeem scripts, absent witness scripts, incomplete PSBT maps, descriptors without operational wallet context, and review packs without matching descriptor/PSBT/transaction artifacts can all reduce confidence.
+
+Review-pack cross-artifact checks are intentionally limited. The tool compares available policy signals and input/output counts, but it does not prove descriptor-to-PSBT equivalence, transaction extraction from PSBT, key origin correctness, signer-set ownership, or wallet state.
 
 ## Technical Due Diligence Connection
 
