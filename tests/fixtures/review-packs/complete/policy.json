@@ -1,0 +1,6 @@
+{
+  "expected_threshold": "single-signer fixture",
+  "requires_human_approval": true,
+  "network": "bitcoin-mainnet",
+  "notes": "Fixture policy only; not a wallet policy."
+}

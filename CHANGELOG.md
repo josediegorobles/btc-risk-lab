@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.4.0 - 2026-06-19
+
+### Added
+
+- Added `review-pack --input DIR --format json|markdown [--output FILE]` for consolidated local review of descriptor, PSBT, transaction, script, policy, and notes artifacts.
+- Added schema version `0.4` `ReviewPackReport` output with detected artifacts, per-artifact summaries, consolidated risk, warnings, missing data, cross-artifact findings, review questions, and limitations.
+- Added cross-artifact checks for descriptor/PSBT multisig and timelock signals, descriptor threshold limitations, and PSBT/transaction input-output counts.
+- Added review-pack fixtures and CLI regression tests for JSON stdout and Markdown file output.
+
+### Security
+
+- `review-pack` performs local file analysis only. It does not sign, create wallets, handle keys, broadcast transactions, or make network calls.
+
 ## v0.3.0 - 2026-06-18
 
 ### Added

@@ -1,5 +1,6 @@
 use assert_cmd::Command;
 use predicates::str::contains;
+use std::fs;
 
 #[test]
 fn analyze_tx_outputs_markdown() {
@@ -113,4 +114,49 @@ fn analyze_descriptor_rejects_invalid_descriptor() {
     cmd.assert().failure().stderr(contains(
         "descriptor input is not a valid public-key output descriptor",
     ));
+}
+
+#[test]
+fn review_pack_outputs_json() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "review-pack",
+        "--input",
+        "tests/fixtures/review-packs/complete",
+        "--format",
+        "json",
+    ]);
+
+    cmd.assert()
+        .success()
+        .stdout(contains("\"schema_version\": \"0.4\""))
+        .stdout(contains("\"artifacts_detected\""))
+        .stdout(contains("\"consolidated_risk\""))
+        .stdout(contains("\"cross_artifact_findings\""))
+        .stdout(contains("\"tx-psbt-counts-match\""));
+}
+
+#[test]
+fn review_pack_outputs_markdown_file() {
+    let temp_dir = tempfile::tempdir().unwrap();
+    let output = temp_dir.path().join("review.md");
+
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "review-pack",
+        "--input",
+        "tests/fixtures/review-packs/complete",
+        "--format",
+        "markdown",
+        "--output",
+        output.to_str().unwrap(),
+    ]);
+
+    cmd.assert().success().stdout("");
+
+    let rendered = fs::read_to_string(output).unwrap();
+    assert!(rendered.contains("BTC Risk Lab Review Pack"));
+    assert!(rendered.contains("Cross-Artifact Findings"));
+    assert!(rendered.contains("Review Questions"));
+    assert!(rendered.contains("Limitations"));
 }

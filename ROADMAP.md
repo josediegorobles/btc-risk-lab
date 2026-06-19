@@ -7,6 +7,7 @@
 - [x] PSBT analysis from base64 input
 - [x] script analysis from hex or a small ASM subset
 - [x] descriptor parsing and policy hints with `miniscript`
+- [x] review-pack reports for descriptor, PSBT, transaction, script, policy, and notes directories
 - [x] report schema versioning
 - [x] JSON and Markdown reports
 - [x] risk warnings with human explanations
@@ -30,7 +31,7 @@
 
 ## Due Diligence Use Cases
 
-- batch analysis for transaction review packs
+- richer batch analysis for transaction review packs
 - policy review for multisig and timelock setups
 - PSBT readiness checklist
 - executive PDF or Markdown due diligence reports
@@ -44,4 +45,5 @@
 - seed phrase handling
 - custody
 - broadcasting
+- review-pack network calls
 - consensus-level validation claims

@@ -1,10 +1,10 @@
-use std::path::PathBuf;
+use std::{fs, path::PathBuf};
 
 use anyhow::{bail, Result};
 use clap::{Parser, Subcommand, ValueEnum};
 
 use btc_risk_lab::analyzer;
-use btc_risk_lab::report::{render_report, OutputFormat};
+use btc_risk_lab::report::{render_report, render_review_pack_report, OutputFormat};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -77,6 +77,18 @@ enum Commands {
         format: CliFormat,
     },
 
+    /// Analyze a local directory containing descriptor, PSBT, transaction, script, policy, and notes artifacts.
+    ReviewPack {
+        #[arg(long, value_name = "DIR")]
+        input: PathBuf,
+
+        #[arg(long, value_enum, default_value_t = CliFormat::Markdown)]
+        format: CliFormat,
+
+        #[arg(long, value_name = "FILE")]
+        output: Option<PathBuf>,
+    },
+
     /// Generate an optional executive summary from an existing technical JSON report.
     Summarize {
         #[arg(long)]
@@ -136,7 +148,25 @@ fn main() -> Result<()> {
             let report = analyzer::analyze_descriptor_input(&descriptor)?;
             println!("{}", render_report(&report, format.into())?);
         }
+        Commands::ReviewPack {
+            input,
+            format,
+            output,
+        } => {
+            let report = btc_risk_lab::review_pack::analyze_review_pack(&input)?;
+            write_or_print(render_review_pack_report(&report, format.into())?, output)?;
+        }
         Commands::Summarize { input, provider } => summarize(input, provider)?,
+    }
+
+    Ok(())
+}
+
+fn write_or_print(rendered: String, output: Option<PathBuf>) -> Result<()> {
+    if let Some(output) = output {
+        fs::write(&output, rendered)?;
+    } else {
+        println!("{rendered}");
     }
 
     Ok(())
