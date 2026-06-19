@@ -161,7 +161,7 @@ fn evidence_specs() -> Vec<EvidenceSpec> {
             format: "yaml",
         },
         EvidenceSpec {
-            artifact: "policy_notes",
+            artifact: "policy",
             file: "policy.json",
             format: "json",
         },

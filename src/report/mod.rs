@@ -287,9 +287,13 @@ fn render_policy_pack_markdown(report: &PolicyPackReport) -> String {
                 .map(|item| format!("{}: {}", item.label, item.value))
                 .collect::<Vec<_>>()
                 .join("; ");
+            let summary = markdown_table_cell(&summary);
             markdown.push_str(&format!(
                 "| `{}` | `{}` | `{}` | {} |\n",
-                document.artifact, document.file, document.format, summary
+                markdown_table_cell(&document.artifact),
+                markdown_table_cell(&document.file),
+                markdown_table_cell(&document.format),
+                summary
             ));
         }
         markdown.push('\n');
@@ -375,6 +379,13 @@ fn risk_name(risk: &RiskLevel) -> &'static str {
         RiskLevel::High => "high",
         RiskLevel::Unknown => "unknown",
     }
+}
+
+fn markdown_table_cell(input: &str) -> String {
+    input
+        .replace('\\', "\\\\")
+        .replace('|', "\\|")
+        .replace(['\n', '\r'], " ")
 }
 
 fn artifact_name(artifact_type: &ArtifactType) -> &'static str {
