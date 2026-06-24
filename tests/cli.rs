@@ -1,5 +1,6 @@
 use assert_cmd::Command;
 use predicates::str::contains;
+use serde_json::Value;
 use std::fs;
 
 #[test]
@@ -137,6 +138,32 @@ fn review_pack_outputs_json() {
 }
 
 #[test]
+fn review_pack_json_is_parseable_with_stable_schema() {
+    let report = json_stdout([
+        "review-pack",
+        "--input",
+        "tests/fixtures/review-packs/complete",
+        "--format",
+        "json",
+    ]);
+
+    assert_eq!(report["schema_version"], "0.4");
+    assert!(
+        report
+            .get("artifacts_detected")
+            .and_then(Value::as_array)
+            .expect("artifacts_detected should be an array")
+            .len()
+            >= 4
+    );
+    assert!(!report
+        .get("review_questions")
+        .and_then(Value::as_array)
+        .expect("review_questions should be an array")
+        .is_empty());
+}
+
+#[test]
 fn review_pack_outputs_markdown_file() {
     let temp_dir = tempfile::tempdir().unwrap();
     let output = temp_dir.path().join("review.md");
@@ -179,6 +206,36 @@ fn policy_pack_outputs_json() {
         .stdout(contains("\"evidence_documents\""))
         .stdout(contains("\"missing_evidence\""))
         .stdout(contains("\"descriptor-psbt-multisig-mismatch\""));
+}
+
+#[test]
+fn policy_pack_json_is_parseable_with_stable_schema() {
+    let report = json_stdout([
+        "policy-pack",
+        "--input",
+        "tests/fixtures/policy-packs/multisig-timelock",
+        "--format",
+        "json",
+    ]);
+
+    assert_eq!(report["schema_version"], "0.5");
+    assert_eq!(report["pack_type"], "policy_pack");
+    assert!(!report
+        .get("evidence_documents")
+        .and_then(Value::as_array)
+        .expect("evidence_documents should be an array")
+        .is_empty());
+    assert!(!report
+        .get("missing_evidence")
+        .and_then(Value::as_array)
+        .expect("missing_evidence should be an array")
+        .is_empty());
+}
+
+fn json_stdout<const N: usize>(args: [&str; N]) -> Value {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    let assert = cmd.args(args).assert().success();
+    serde_json::from_slice(&assert.get_output().stdout).expect("stdout should be valid JSON")
 }
 
 #[test]
