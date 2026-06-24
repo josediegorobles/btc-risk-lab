@@ -1,5 +1,6 @@
 use assert_cmd::Command;
 use predicates::str::contains;
+use serde_json::Value;
 use std::fs;
 
 #[test]
@@ -137,6 +138,28 @@ fn review_pack_outputs_json() {
 }
 
 #[test]
+fn review_pack_json_is_parseable_with_stable_schema() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    let output = cmd
+        .args([
+            "review-pack",
+            "--input",
+            "tests/fixtures/review-packs/complete",
+            "--format",
+            "json",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+
+    assert_eq!(report["schema_version"], "0.4");
+    assert!(report["artifacts_detected"].as_array().unwrap().len() >= 4);
+    assert!(!report["review_questions"].as_array().unwrap().is_empty());
+}
+
+#[test]
 fn review_pack_outputs_markdown_file() {
     let temp_dir = tempfile::tempdir().unwrap();
     let output = temp_dir.path().join("review.md");
@@ -179,6 +202,29 @@ fn policy_pack_outputs_json() {
         .stdout(contains("\"evidence_documents\""))
         .stdout(contains("\"missing_evidence\""))
         .stdout(contains("\"descriptor-psbt-multisig-mismatch\""));
+}
+
+#[test]
+fn policy_pack_json_is_parseable_with_stable_schema() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    let output = cmd
+        .args([
+            "policy-pack",
+            "--input",
+            "tests/fixtures/policy-packs/multisig-timelock",
+            "--format",
+            "json",
+        ])
+        .output()
+        .unwrap();
+
+    assert!(output.status.success());
+    let report: Value = serde_json::from_slice(&output.stdout).unwrap();
+
+    assert_eq!(report["schema_version"], "0.5");
+    assert_eq!(report["pack_type"], "policy_pack");
+    assert!(!report["evidence_documents"].as_array().unwrap().is_empty());
+    assert!(!report["missing_evidence"].as_array().unwrap().is_empty());
 }
 
 #[test]
