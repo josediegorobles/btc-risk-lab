@@ -14,6 +14,10 @@ use btc_risk_lab::report::{
     long_about = "Analyze Bitcoin transactions, PSBTs, and scripts to produce explainable technical risk reports. This tool does not create wallets, sign transactions, custody funds, or handle private keys."
 )]
 struct Cli {
+    /// Disable commands that would make outbound network requests.
+    #[arg(long, global = true)]
+    offline: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
@@ -147,6 +151,10 @@ fn main() -> Result<()> {
         }
         #[cfg(feature = "fetch")]
         Commands::FetchTx { txid, format } => {
+            ensure_online(
+                cli.offline,
+                "fetch-tx needs Esplora HTTPS; pass transaction hex or a JSON file to analyze-tx with --hex or --input instead",
+            )?;
             let report = fetch_tx(&txid)?;
             println!("{}", render_report(&report, format.into())?);
         }
@@ -178,7 +186,15 @@ fn main() -> Result<()> {
             let report = btc_risk_lab::policy_pack::analyze_policy_pack(&input)?;
             write_or_print(render_policy_pack_report(&report, format.into())?, output)?;
         }
-        Commands::Summarize { input, provider } => summarize(input, provider)?,
+        Commands::Summarize { input, provider } => summarize(input, provider, cli.offline)?,
+    }
+
+    Ok(())
+}
+
+fn ensure_online(offline: bool, explanation: &str) -> Result<()> {
+    if offline {
+        bail!("network access disabled by --offline; {explanation}");
     }
 
     Ok(())
@@ -209,7 +225,11 @@ fn fetch_tx(txid: &str) -> Result<btc_risk_lab::analyzer::RiskReport> {
 }
 
 #[cfg(feature = "ai")]
-fn summarize(input: PathBuf, provider: AiProvider) -> Result<()> {
+fn summarize(input: PathBuf, provider: AiProvider, offline: bool) -> Result<()> {
+    ensure_online(
+        offline,
+        "summarize --provider openai needs the configured AI HTTP endpoint; inspect the JSON report directly or rerun without --offline",
+    )?;
     let provider = match provider {
         AiProvider::Openai => btc_risk_lab::ai::ProviderKind::Openai,
     };
@@ -218,6 +238,6 @@ fn summarize(input: PathBuf, provider: AiProvider) -> Result<()> {
 }
 
 #[cfg(not(feature = "ai"))]
-fn summarize(_input: PathBuf, _provider: AiProvider) -> Result<()> {
+fn summarize(_input: PathBuf, _provider: AiProvider, _offline: bool) -> Result<()> {
     bail!("compiled without ai feature")
 }

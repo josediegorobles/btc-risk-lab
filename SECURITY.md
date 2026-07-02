@@ -22,6 +22,17 @@ Please open a GitHub security advisory or contact the maintainer privately if yo
 
 Do not submit real private keys, seed phrases, wallet files, production PSBTs, proprietary transaction data, or confidential client artifacts in public issues.
 
+## Network Egress
+
+By default, installed builds have no network features enabled. The deterministic analyzer commands are local-only: `analyze-tx`, `analyze-psbt`, `analyze-script`, `analyze-descriptor`, `review-pack`, and `policy-pack`.
+
+Network-backed commands are explicit:
+
+- `fetch-tx --txid TXID`, when compiled with `--features fetch`, performs read-only HTTPS GET requests to mempool.space's Esplora API at `https://mempool.space/api`. The outgoing request path contains only the public transaction id. To avoid this egress, pass the transaction directly with `analyze-tx --hex HEX` or `analyze-tx --input FILE`.
+- `summarize --input report.json --provider openai`, when compiled with `--features ai`, sends only the already-produced btc-risk-lab JSON report to the configured OpenAI-compatible endpoint. To avoid this egress, inspect the deterministic JSON or Markdown report directly.
+
+The global `--offline` flag makes network-backed commands fail before an HTTP client is used.
+
 ## AI Feature Boundary
 
 AI support is optional and behind the `ai` feature flag. The base analyzer is deterministic and local. Builds compiled without `ai` return `compiled without ai feature` for the summary command.

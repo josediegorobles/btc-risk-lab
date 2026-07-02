@@ -47,6 +47,24 @@ fn fetch_tx_command_is_available_with_fetch_feature() {
     cmd.assert().success().stdout(contains("fetch-tx"));
 }
 
+#[cfg(feature = "fetch")]
+#[test]
+fn offline_rejects_fetch_tx_before_network_access() {
+    let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();
+    cmd.args([
+        "--offline",
+        "fetch-tx",
+        "--txid",
+        "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b",
+    ]);
+
+    cmd.assert()
+        .failure()
+        .stderr(contains("network access disabled by --offline"))
+        .stderr(contains("fetch-tx needs Esplora HTTPS"))
+        .stderr(contains("analyze-tx"));
+}
+
 #[test]
 fn analyze_script_outputs_json() {
     let mut cmd = Command::cargo_bin("btc-risk-lab").unwrap();

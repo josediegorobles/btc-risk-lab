@@ -69,6 +69,12 @@ Run locally during development:
 cargo run -- analyze-tx --input examples/tx.json --format markdown
 ```
 
+Force offline mode for commands that should not touch the network:
+
+```bash
+btc-risk-lab --offline analyze-tx --input examples/tx.json --format markdown
+```
+
 ## Commands
 
 Analyze a transaction JSON file:
@@ -92,6 +98,12 @@ btc-risk-lab fetch-tx --txid a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc8
 ```
 
 `fetch-tx` is behind the non-default `fetch` feature and only performs read-only HTTPS GET requests to public transaction endpoints. It does not broadcast transactions, sign, custody funds, or handle keys.
+
+Use `--offline` to make `fetch-tx` fail before any HTTP request is made:
+
+```bash
+btc-risk-lab --offline fetch-tx --txid a1075db55d416d3ca199f55b6084e2115b9345e16c5cf302fc80e9d5fbf5d48d
+```
 
 Analyze a base64 PSBT:
 
@@ -168,6 +180,8 @@ The `summarize` command is behind the non-default `ai` feature. Builds compiled 
 When enabled, the OpenAI-compatible provider calls `BTC_RISK_LAB_AI_BASE_URL` or `https://api.openai.com/v1` by default, authenticates with `BTC_RISK_LAB_AI_API_KEY`, and optionally uses `BTC_RISK_LAB_AI_MODEL` or `gpt-4o-mini` by default. The HTTP client has a hard 20 second timeout.
 
 The only input sent to the provider is the already-produced btc-risk-lab JSON report passed via `--input`. The command does not read or upload raw transaction hex files, PSBT files, descriptors, scripts, policy notes, wallet files, keys, seed phrases, or signing material. Output is marked `AI-assisted draft` and must be reviewed against the underlying technical report.
+
+Use `--offline` to make the AI-backed summary command fail before any HTTP request is made.
 
 ## Transaction Input Format
 
@@ -256,6 +270,25 @@ It is an analysis, explainability, and reporting tool.
 The base analyzer runs locally and does not require network access.
 
 AI support is optional and isolated behind the `ai` feature flag. When `summarize` is run with the OpenAI-compatible provider, it sends only the already-produced technical JSON report to the configured AI endpoint and labels the result as an `AI-assisted draft`. Private keys, seed phrases, wallet files, raw artifacts, and signing material are out of scope by design.
+
+## Network Egress
+
+By default, installed builds have no network features enabled. The deterministic analyzer commands are local-only:
+
+- `analyze-tx --input FILE`
+- `analyze-tx --hex HEX`
+- `analyze-psbt --input FILE`
+- `analyze-script --script TEXT`
+- `analyze-descriptor --descriptor TEXT`
+- `review-pack --input DIR`
+- `policy-pack --input DIR`
+
+Commands that can touch the network:
+
+- `fetch-tx --txid TXID`, when compiled with `--features fetch`, performs read-only HTTPS GET requests to mempool.space's Esplora API at `https://mempool.space/api`. The outgoing request path contains only the public transaction id. Avoid this egress by passing the transaction directly to `analyze-tx --hex HEX` or `analyze-tx --input FILE`.
+- `summarize --input report.json --provider openai`, when compiled with `--features ai`, sends only the already-produced btc-risk-lab JSON report to the configured OpenAI-compatible endpoint. Avoid this egress by inspecting the JSON or Markdown report directly.
+
+The global `--offline` flag turns any network-backed command into an explanatory error before the HTTP client is used.
 
 ## Limitations
 

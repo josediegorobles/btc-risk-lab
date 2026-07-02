@@ -5,6 +5,7 @@
 ### Added
 
 - Added a real `ai` feature implementation for `summarize --input report.json --provider openai` using an OpenAI-compatible `/chat/completions` endpoint configured by `BTC_RISK_LAB_AI_BASE_URL`, `BTC_RISK_LAB_AI_API_KEY`, and optional `BTC_RISK_LAB_AI_MODEL`.
+- Added a global `--offline` flag that turns network-backed commands into explanatory errors before any HTTP client is used.
 
 ### Changed
 
@@ -14,6 +15,7 @@
 ### Security
 
 - The AI provider HTTP client uses a hard 20 second timeout and does not read or upload raw transaction, PSBT, descriptor, script, policy, wallet, private key, seed phrase, or signing material artifacts.
+- Documented network egress boundaries: `fetch-tx` sends only the public txid to mempool.space Esplora, while AI summaries send only the already-produced btc-risk-lab JSON report to the configured AI endpoint.
 
 ## v0.5.0 - 2026-06-19
 
