@@ -6,11 +6,13 @@
 
 - Added a real `ai` feature implementation for `summarize --input report.json --provider openai` using an OpenAI-compatible `/chat/completions` endpoint configured by `BTC_RISK_LAB_AI_BASE_URL`, `BTC_RISK_LAB_AI_API_KEY`, and optional `BTC_RISK_LAB_AI_MODEL`.
 - Added a global `--offline` flag that turns network-backed commands into explanatory errors before any HTTP client is used.
+- Added property tests covering transaction, PSBT, and script analysis against arbitrary bytes and mutated valid fixtures.
 
 ### Changed
 
 - AI summary output is explicitly marked `AI-assisted draft` and the command sends only the already-produced btc-risk-lab JSON report to the configured provider.
 - Builds compiled without `--features ai` now fail the summary command with `compiled without ai feature`.
+- Extracted shared pack input validation, file presence checks, file reading, and metadata helpers into `pack_common`.
 
 ### Security
 

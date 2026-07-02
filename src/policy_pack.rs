@@ -1,14 +1,12 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
-use anyhow::{bail, Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::{
     analyzer::{RiskLevel, RiskWarning, SummaryItem},
+    pack_common,
     review_pack::{
         analyze_review_pack, ArtifactSummary, CrossArtifactFinding, DetectedArtifact,
         ReviewPackReport,
@@ -49,12 +47,7 @@ pub struct PolicyFinding {
 }
 
 pub fn analyze_policy_pack(input_dir: &Path) -> Result<PolicyPackReport> {
-    if !input_dir.is_dir() {
-        bail!(
-            "policy pack input must be a directory: {}",
-            input_dir.display()
-        );
-    }
+    pack_common::validate_input_dir(input_dir, "policy pack")?;
 
     let review_pack = analyze_review_pack(input_dir)?;
     let evidence_documents = read_evidence_documents(input_dir)?;
@@ -119,16 +112,16 @@ fn read_evidence_documents(input_dir: &Path) -> Result<Vec<EvidenceDocument>> {
     let mut documents = Vec::new();
 
     for spec in evidence_specs() {
-        let path = input_dir.join(spec.file);
-        if !path.exists() {
+        let Some(path) = pack_common::optional_file(input_dir, spec.file) else {
             continue;
-        }
+        };
 
-        let input = fs::read_to_string(&path)
-            .with_context(|| format!("failed to read evidence document {}", path.display()))?;
+        let input = pack_common::read_to_string(&path, || {
+            format!("failed to read evidence document {}", path.display())
+        })?;
         documents.push(EvidenceDocument {
             artifact: spec.artifact.to_owned(),
-            file: file_name(&path),
+            file: pack_common::file_name(&path),
             format: spec.format.to_owned(),
             summary: summarize_evidence(spec.format, &input),
         });
@@ -424,7 +417,7 @@ fn has_policy_notes(documents: &[EvidenceDocument]) -> bool {
 fn has_metadata(documents: &[EvidenceDocument]) -> bool {
     documents
         .iter()
-        .any(|document| document.artifact == "metadata")
+        .any(|document| pack_common::is_metadata_artifact(&document.artifact))
 }
 
 fn push_detected_once(artifacts: &mut Vec<DetectedArtifact>, artifact: DetectedArtifact) {
@@ -434,12 +427,6 @@ fn push_detected_once(artifacts: &mut Vec<DetectedArtifact>, artifact: DetectedA
     {
         artifacts.push(artifact);
     }
-}
-
-fn file_name(path: &Path) -> String {
-    path.file_name()
-        .map(|name| PathBuf::from(name).display().to_string())
-        .unwrap_or_else(|| path.display().to_string())
 }
 
 fn artifact_label(input: &str) -> String {

@@ -1,15 +1,15 @@
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::Path;
 
-use anyhow::{bail, Context, Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::analyzer::{
-    self, DescriptorAnalysis, PsbtAnalysis, RiskLevel, RiskReport, RiskWarning, ScriptSignals,
-    SummaryItem, TransactionAnalysis,
+use crate::{
+    analyzer::{
+        self, DescriptorAnalysis, PsbtAnalysis, RiskLevel, RiskReport, RiskWarning, ScriptSignals,
+        SummaryItem, TransactionAnalysis,
+    },
+    pack_common,
 };
 
 const REVIEW_PACK_SCHEMA_VERSION: &str = "0.4";
@@ -69,12 +69,7 @@ struct AnalyzedArtifacts {
 }
 
 pub fn analyze_review_pack(input_dir: &Path) -> Result<ReviewPackReport> {
-    if !input_dir.is_dir() {
-        bail!(
-            "review pack input must be a directory: {}",
-            input_dir.display()
-        );
-    }
+    pack_common::validate_input_dir(input_dir, "review pack")?;
 
     let mut artifacts_detected = Vec::new();
     let mut per_artifact_summary = Vec::new();
@@ -173,14 +168,14 @@ fn read_descriptor(
     missing_data: &mut Vec<String>,
     analyzed: &mut AnalyzedArtifacts,
 ) -> Result<()> {
-    let path = input_dir.join("descriptor.txt");
-    if !path.exists() {
+    let Some(path) = pack_common::optional_file(input_dir, "descriptor.txt") else {
         return Ok(());
-    }
+    };
 
     artifacts.push(detected("descriptor", &path));
-    let input = fs::read_to_string(&path)
-        .with_context(|| format!("failed to read descriptor input {}", path.display()))?;
+    let input = pack_common::read_to_string(&path, || {
+        format!("failed to read descriptor input {}", path.display())
+    })?;
 
     match analyzer::analyze_descriptor_input(&input) {
         Ok(report) => {
@@ -208,10 +203,9 @@ fn read_psbt(
     missing_data: &mut Vec<String>,
     analyzed: &mut AnalyzedArtifacts,
 ) {
-    let path = input_dir.join("psbt.base64");
-    if !path.exists() {
+    let Some(path) = pack_common::optional_file(input_dir, "psbt.base64") else {
         return;
-    }
+    };
 
     artifacts.push(detected("psbt", &path));
     match analyzer::analyze_psbt_file(&path) {
@@ -238,10 +232,9 @@ fn read_transaction(
     missing_data: &mut Vec<String>,
     analyzed: &mut AnalyzedArtifacts,
 ) {
-    let path = input_dir.join("tx.json");
-    if !path.exists() {
+    let Some(path) = pack_common::optional_file(input_dir, "tx.json") else {
         return;
-    }
+    };
 
     artifacts.push(detected("transaction", &path));
     match analyzer::analyze_transaction_file(&path) {
@@ -268,14 +261,14 @@ fn read_script(
     missing_data: &mut Vec<String>,
     analyzed: &mut AnalyzedArtifacts,
 ) -> Result<()> {
-    let path = input_dir.join("script.txt");
-    if !path.exists() {
+    let Some(path) = pack_common::optional_file(input_dir, "script.txt") else {
         return Ok(());
-    }
+    };
 
     artifacts.push(detected("script", &path));
-    let input = fs::read_to_string(&path)
-        .with_context(|| format!("failed to read script input {}", path.display()))?;
+    let input = pack_common::read_to_string(&path, || {
+        format!("failed to read script input {}", path.display())
+    })?;
 
     match analyzer::analyze_script_input(&input) {
         Ok(report) => {
@@ -302,14 +295,14 @@ fn read_policy(
     warnings: &mut Vec<RiskWarning>,
     missing_data: &mut Vec<String>,
 ) -> Result<()> {
-    let path = input_dir.join("policy.json");
-    if !path.exists() {
+    let Some(path) = pack_common::optional_file(input_dir, "policy.json") else {
         return Ok(());
-    }
+    };
 
     artifacts.push(detected("policy", &path));
-    let input = fs::read_to_string(&path)
-        .with_context(|| format!("failed to read policy.json {}", path.display()))?;
+    let input = pack_common::read_to_string(&path, || {
+        format!("failed to read policy.json {}", path.display())
+    })?;
 
     match serde_json::from_str::<Value>(&input) {
         Ok(value) => summaries.push(ArtifactSummary {
@@ -338,14 +331,14 @@ fn read_notes(
     artifacts: &mut Vec<DetectedArtifact>,
     summaries: &mut Vec<ArtifactSummary>,
 ) -> Result<()> {
-    let path = input_dir.join("notes.md");
-    if !path.exists() {
+    let Some(path) = pack_common::optional_file(input_dir, "notes.md") else {
         return Ok(());
-    }
+    };
 
     artifacts.push(detected("notes", &path));
-    let input = fs::read_to_string(&path)
-        .with_context(|| format!("failed to read review notes {}", path.display()))?;
+    let input = pack_common::read_to_string(&path, || {
+        format!("failed to read review notes {}", path.display())
+    })?;
 
     summaries.push(ArtifactSummary {
         artifact: "notes".to_owned(),
@@ -440,7 +433,7 @@ fn add_absent_artifact_context(input_dir: &Path, missing_data: &mut Vec<String>)
             "tx.json not provided; final transaction count comparison is unavailable",
         ),
     ] {
-        if !input_dir.join(file).exists() {
+        if !pack_common::has_file(input_dir, file) {
             missing_data.push(message.to_owned());
         }
     }
@@ -736,14 +729,8 @@ fn json_type(value: &Value) -> &'static str {
 fn detected(artifact: &str, path: &Path) -> DetectedArtifact {
     DetectedArtifact {
         artifact: artifact.to_owned(),
-        file: file_name(path),
+        file: pack_common::file_name(path),
     }
-}
-
-fn file_name(path: &Path) -> String {
-    path.file_name()
-        .map(|name| PathBuf::from(name).display().to_string())
-        .unwrap_or_else(|| path.display().to_string())
 }
 
 fn artifact_label(input: &str) -> String {
