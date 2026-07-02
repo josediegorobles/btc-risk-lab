@@ -160,10 +160,14 @@ The schema `0.5` `PolicyPackReport` includes artifacts detected, evidence docume
 Generate an optional executive summary from an existing JSON report:
 
 ```bash
-cargo run --features ai -- summarize --input report.json --provider openai
+BTC_RISK_LAB_AI_API_KEY=... cargo run --features ai -- summarize --input report.json --provider openai
 ```
 
-In the MVP, the AI feature is deliberately conservative: it summarizes only an existing local JSON report and does not send artifacts or secrets to an external provider.
+The `summarize` command is behind the non-default `ai` feature. Builds compiled without that feature return `compiled without ai feature`.
+
+When enabled, the OpenAI-compatible provider calls `BTC_RISK_LAB_AI_BASE_URL` or `https://api.openai.com/v1` by default, authenticates with `BTC_RISK_LAB_AI_API_KEY`, and optionally uses `BTC_RISK_LAB_AI_MODEL` or `gpt-4o-mini` by default. The HTTP client has a hard 20 second timeout.
+
+The only input sent to the provider is the already-produced btc-risk-lab JSON report passed via `--input`. The command does not read or upload raw transaction hex files, PSBT files, descriptors, scripts, policy notes, wallet files, keys, seed phrases, or signing material. Output is marked `AI-assisted draft` and must be reviewed against the underlying technical report.
 
 ## Transaction Input Format
 
@@ -251,7 +255,7 @@ It is an analysis, explainability, and reporting tool.
 
 The base analyzer runs locally and does not require network access.
 
-AI support is optional and isolated behind the `ai` feature flag. The intended production architecture is to send only the already-produced technical JSON report, after redaction and policy checks, to an external summarization provider. Private keys, seed phrases, wallet files, and signing material are out of scope by design.
+AI support is optional and isolated behind the `ai` feature flag. When `summarize` is run with the OpenAI-compatible provider, it sends only the already-produced technical JSON report to the configured AI endpoint and labels the result as an `AI-assisted draft`. Private keys, seed phrases, wallet files, raw artifacts, and signing material are out of scope by design.
 
 ## Limitations
 

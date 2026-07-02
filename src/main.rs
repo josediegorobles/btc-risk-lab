@@ -211,7 +211,7 @@ fn fetch_tx(txid: &str) -> Result<btc_risk_lab::analyzer::RiskReport> {
 #[cfg(feature = "ai")]
 fn summarize(input: PathBuf, provider: AiProvider) -> Result<()> {
     let provider = match provider {
-        AiProvider::Openai => btc_risk_lab::ai::Provider::Openai,
+        AiProvider::Openai => btc_risk_lab::ai::ProviderKind::Openai,
     };
     println!("{}", btc_risk_lab::ai::summarize_report(&input, provider)?);
     Ok(())
@@ -219,5 +219,5 @@ fn summarize(input: PathBuf, provider: AiProvider) -> Result<()> {
 
 #[cfg(not(feature = "ai"))]
 fn summarize(_input: PathBuf, _provider: AiProvider) -> Result<()> {
-    bail!("AI summaries are disabled. Rebuild with `--features ai` to enable this command.")
+    bail!("compiled without ai feature")
 }

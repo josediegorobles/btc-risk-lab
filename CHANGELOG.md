@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Added a real `ai` feature implementation for `summarize --input report.json --provider openai` using an OpenAI-compatible `/chat/completions` endpoint configured by `BTC_RISK_LAB_AI_BASE_URL`, `BTC_RISK_LAB_AI_API_KEY`, and optional `BTC_RISK_LAB_AI_MODEL`.
+
+### Changed
+
+- AI summary output is explicitly marked `AI-assisted draft` and the command sends only the already-produced btc-risk-lab JSON report to the configured provider.
+- Builds compiled without `--features ai` now fail the summary command with `compiled without ai feature`.
+
+### Security
+
+- The AI provider HTTP client uses a hard 20 second timeout and does not read or upload raw transaction, PSBT, descriptor, script, policy, wallet, private key, seed phrase, or signing material artifacts.
+
 ## v0.5.0 - 2026-06-19
 
 ### Added

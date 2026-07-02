@@ -24,14 +24,17 @@ Do not submit real private keys, seed phrases, wallet files, production PSBTs, p
 
 ## AI Feature Boundary
 
-AI support is optional and behind a feature flag. The base analyzer is deterministic and local.
+AI support is optional and behind the `ai` feature flag. The base analyzer is deterministic and local. Builds compiled without `ai` return `compiled without ai feature` for the summary command.
 
-Any future external AI provider integration must:
+The OpenAI-compatible summarizer uses:
 
-- operate only on the already-produced technical JSON report
-- include redaction and allowlist checks
-- avoid private keys, seed phrases, wallet files, and signing material
-- document exactly what leaves the local machine
+- `BTC_RISK_LAB_AI_BASE_URL` for the provider base URL, defaulting to `https://api.openai.com/v1`
+- `BTC_RISK_LAB_AI_API_KEY` for authentication
+- `BTC_RISK_LAB_AI_MODEL` for the model name, defaulting to `gpt-4o-mini`
+
+The AI HTTP client has a hard 20 second timeout.
+
+Only the already-produced btc-risk-lab JSON report passed to `summarize --input report.json` leaves the local machine. The command does not read or upload raw transaction hex files, PSBT files, descriptors, scripts, policy notes, wallet files, private keys, seed phrases, or signing material. Output is labeled `AI-assisted draft` and must not replace review of the deterministic technical report.
 
 ## Validation Boundary
 

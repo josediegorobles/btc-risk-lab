@@ -12,7 +12,7 @@ categories = ["command-line-utilities", "cryptography::cryptocurrencies"]
 
 [features]
 default = []
-ai = []
+ai = ["dep:reqwest", "dep:tokio"]
 fetch = ["dep:reqwest", "dep:tokio"]
 
 [dependencies]
