@@ -192,6 +192,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[cfg(any(feature = "fetch", feature = "ai"))]
 fn ensure_online(offline: bool, explanation: &str) -> Result<()> {
     if offline {
         bail!("network access disabled by --offline; {explanation}");

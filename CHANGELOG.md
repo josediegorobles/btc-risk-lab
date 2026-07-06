@@ -1,9 +1,14 @@
 # Changelog
 
-## Unreleased
+## v0.5.0 - 2026-07-06
 
 ### Added
 
+- Added `policy-pack --input DIR --format json|markdown [--output FILE]` for local custody, audit, and technical policy evidence review.
+- Added schema version `0.5` `PolicyPackReport` output with artifacts detected, evidence document summaries, per-artifact summaries, consolidated findings, warnings, missing evidence, review questions, and limitations.
+- Added Markdown/YAML/JSON policy note evidence summaries and optional metadata evidence summaries.
+- Added policy-pack fixtures and CLI/unit regression tests, including missing policy notes coverage.
+- Added a public sample report at `docs/policy-pack-sample.md`.
 - Added a real `ai` feature implementation for `summarize --input report.json --provider openai` using an OpenAI-compatible `/chat/completions` endpoint configured by `BTC_RISK_LAB_AI_BASE_URL`, `BTC_RISK_LAB_AI_API_KEY`, and optional `BTC_RISK_LAB_AI_MODEL`.
 - Added a global `--offline` flag that turns network-backed commands into explanatory errors before any HTTP client is used.
 - Added property tests covering transaction, PSBT, and script analysis against arbitrary bytes and mutated valid fixtures.
@@ -18,19 +23,6 @@
 
 - The AI provider HTTP client uses a hard 20 second timeout and does not read or upload raw transaction, PSBT, descriptor, script, policy, wallet, private key, seed phrase, or signing material artifacts.
 - Documented network egress boundaries: `fetch-tx` sends only the public txid to mempool.space Esplora, while AI summaries send only the already-produced btc-risk-lab JSON report to the configured AI endpoint.
-
-## v0.5.0 - 2026-06-19
-
-### Added
-
-- Added `policy-pack --input DIR --format json|markdown [--output FILE]` for local custody, audit, and technical policy evidence review.
-- Added schema version `0.5` `PolicyPackReport` output with artifacts detected, evidence document summaries, per-artifact summaries, consolidated findings, warnings, missing evidence, review questions, and limitations.
-- Added Markdown/YAML/JSON policy note evidence summaries and optional metadata evidence summaries.
-- Added policy-pack fixtures and CLI/unit regression tests, including missing policy notes coverage.
-- Added a public sample report at `docs/policy-pack-sample.md`.
-
-### Security
-
 - `policy-pack` performs local file analysis only. It does not sign, create wallets, handle keys, broadcast transactions, or make network calls.
 
 ## v0.4.0 - 2026-06-19

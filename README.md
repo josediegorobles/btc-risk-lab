@@ -86,7 +86,7 @@ btc-risk-lab analyze-tx --input examples/tx.json --format markdown
 Analyze a raw transaction hex string directly:
 
 ```bash
-btc-risk-lab analyze-tx --hex 0200000001... --format markdown
+btc-risk-lab analyze-tx --hex 02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff02e80300000000000016001400000000000000000000000000000000000000006400000000000000160014111111111111111111111111111111111111111100000000 --format markdown
 ```
 
 When no prevouts are provided, fee analysis is reported as unavailable instead of guessed.
@@ -120,7 +120,7 @@ btc-risk-lab analyze-script --script "OP_CHECKMULTISIG OP_CHECKSEQUENCEVERIFY" -
 Analyze an output descriptor:
 
 ```bash
-btc-risk-lab analyze-descriptor --descriptor "wsh(sortedmulti(2,02...,03...,04...))" --format markdown
+btc-risk-lab analyze-descriptor --descriptor "wsh(sortedmulti(2,020e0338c96a8870479f2396c373cc7696ba124e8635d41b0ea581112b67817261,0250863ad64a87ae8a2fe83c1af1a8403cb53f53e486d8511dad8a04887e5b2352,03fff97bd5755eeea420453a14355235d382f6472f8568a18b2f057a1460297556))" --format markdown
 ```
 
 Analyze a local review pack directory:
@@ -172,7 +172,8 @@ The schema `0.5` `PolicyPackReport` includes artifacts detected, evidence docume
 Generate an optional executive summary from an existing JSON report:
 
 ```bash
-BTC_RISK_LAB_AI_API_KEY=... cargo run --features ai -- summarize --input report.json --provider openai
+cargo run -- analyze-tx --input examples/tx.json --format json > report.json
+BTC_RISK_LAB_AI_API_KEY=sk-your-key cargo run --features ai -- summarize --input report.json --provider openai
 ```
 
 The `summarize` command is behind the non-default `ai` feature. Builds compiled without that feature return `compiled without ai feature`.
@@ -189,7 +190,7 @@ Transactions are provided as JSON so fee analysis can explain whether the requir
 
 ```json
 {
-  "hex": "0200000001...",
+  "hex": "02000000010000000000000000000000000000000000000000000000000000000000000000ffffffff00ffffffff02e80300000000000016001400000000000000000000000000000000000000006400000000000000160014111111111111111111111111111111111111111100000000",
   "prevouts": [
     {
       "value_sats": 2000,
