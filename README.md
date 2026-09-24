@@ -325,3 +325,7 @@ cargo test --all-features
 ## License
 
 MIT
+
+---
+
+Servicio relacionado: https://josedrobles.com/bitcoin-risk/
