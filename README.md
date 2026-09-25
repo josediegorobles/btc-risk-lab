@@ -328,4 +328,4 @@ MIT
 
 ---
 
-Servicio relacionado: https://josedrobles.com/bitcoin-risk/
+Part of: Bitcoin risk lab — assess settlement, custody and operational risk in Bitcoin and Lightning — https://josedrobles.com/bitcoin-risk/
